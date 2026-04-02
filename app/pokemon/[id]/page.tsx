@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-import Image from "next/image";
 import type { Metadata } from "next";
+import Image from "next/image";
+import { Suspense } from "react";
 
 import { fetchPokemonDetail } from "@/api/request";
 import { Breadcrumb } from "@/components/breadcrumb";
@@ -17,12 +17,16 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const pokemon = await fetchPokemonDetail({ id });
-  const imageUrl = pokemon.officialArtwork ?? pokemon.sprite ?? "";
+  const raw = await fetchPokemonDetail({ id });
+  const imageUrl
+    = raw.sprites.other["official-artwork"].front_default
+    ?? raw.sprites.front_default
+    ?? "";
+  const types = raw.types.map(t => t.type.name);
 
   return {
-    title: pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1),
-    description: `${pokemon.name} — Type: ${pokemon.types.join(", ")}. Height: ${pokemon.height / 10}m, Weight: ${pokemon.weight / 10}kg.`,
+    title: raw.name.charAt(0).toUpperCase() + raw.name.slice(1),
+    description: `${raw.name} — Type: ${types.join(", ")}. Height: ${raw.height / 10}m, Weight: ${raw.weight / 10}kg.`,
     openGraph: {
       images: imageUrl ? [{ url: imageUrl, width: 475, height: 475 }] : [],
     },
@@ -30,14 +34,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 async function PokemonStats({ id }: { id: string }) {
-  const pokemon = await fetchPokemonDetail({ id });
+  const raw = await fetchPokemonDetail({ id });
   return (
     <div className="space-y-1.5">
-      {pokemon.stats.map((stat) => (
+      {raw.stats.map(s => (
         <StatBar
-          key={stat.name}
-          name={stat.name}
-          value={stat.base_stat}
+          key={s.stat.name}
+          name={s.stat.name}
+          value={s.base_stat}
         />
       ))}
     </div>
@@ -45,20 +49,20 @@ async function PokemonStats({ id }: { id: string }) {
 }
 
 async function PokemonAbilities({ id }: { id: string }) {
-  const pokemon = await fetchPokemonDetail({ id });
+  const raw = await fetchPokemonDetail({ id });
   return (
     <div className="flex flex-wrap gap-2">
-      {pokemon.abilities.map((ability) => (
+      {raw.abilities.map(a => (
         <span
-          key={ability.name}
+          key={a.ability.name}
           className={`rounded-full border px-3 py-1 font-mono text-xs capitalize ${
-            ability.is_hidden
+            a.is_hidden
               ? "border-green-300/30 text-green-300/50"
               : "border-green-300 text-green-300"
           }`}
         >
-          {ability.name}
-          {ability.is_hidden && (
+          {a.ability.name}
+          {a.is_hidden && (
             <span className="ml-1 text-green-300/40">(hidden)</span>
           )}
         </span>
@@ -69,11 +73,15 @@ async function PokemonAbilities({ id }: { id: string }) {
 
 export default async function PokemonDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const pokemon = await fetchPokemonDetail({ id });
+  const raw = await fetchPokemonDetail({ id });
 
-  const paddedId = String(pokemon.id).padStart(3, "0");
-  const imageSrc = pokemon.officialArtwork ?? pokemon.sprite ?? "/pokemon-fallback.svg";
-  const displayName = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1);
+  const paddedId = String(raw.id).padStart(3, "0");
+  const imageSrc
+    = raw.sprites.other["official-artwork"].front_default
+    ?? raw.sprites.front_default
+    ?? "/pokemon-fallback.svg";
+  const displayName = raw.name.charAt(0).toUpperCase() + raw.name.slice(1);
+  const types = raw.types.map(t => t.type.name);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 md:px-8">
@@ -92,13 +100,14 @@ export default async function PokemonDetailPage({ params }: PageProps) {
               {displayName}
             </h1>
             <span className="font-mono font-bold text-green-300">
-              #{paddedId}
+              #
+              {paddedId}
             </span>
           </div>
 
           {/* Type badges */}
           <div className="mb-4 flex gap-2">
-            {pokemon.types.map((type) => (
+            {types.map(type => (
               <TypeBadge
                 key={type}
                 type={type}
@@ -136,10 +145,10 @@ export default async function PokemonDetailPage({ params }: PageProps) {
           {/* Info grid */}
           <div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl bg-slate-900 p-4 sm:grid-cols-4">
             {[
-              { label: "HEIGHT", value: `${pokemon.height / 10}m` },
-              { label: "WEIGHT", value: `${pokemon.weight / 10}kg` },
-              { label: "BASE EXP", value: pokemon.base_experience },
-              { label: "TYPES", value: pokemon.types.length },
+              { label: "HEIGHT", value: `${raw.height / 10}m` },
+              { label: "WEIGHT", value: `${raw.weight / 10}kg` },
+              { label: "BASE EXP", value: raw.base_experience },
+              { label: "TYPES", value: types.length },
             ].map(({ label, value }) => (
               <div key={label}>
                 <p className="font-mono text-xs text-green-300/50">{label}</p>
@@ -156,8 +165,8 @@ export default async function PokemonDetailPage({ params }: PageProps) {
               BASE STATS
             </h2>
             <Suspense
-              fallback={
-                <div className="space-y-2 animate-pulse">
+              fallback={(
+                <div className="animate-pulse space-y-2">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
@@ -165,7 +174,7 @@ export default async function PokemonDetailPage({ params }: PageProps) {
                     />
                   ))}
                 </div>
-              }
+              )}
             >
               <PokemonStats id={id} />
             </Suspense>
@@ -177,12 +186,12 @@ export default async function PokemonDetailPage({ params }: PageProps) {
               ABILITIES
             </h2>
             <Suspense
-              fallback={
-                <div className="flex gap-2 animate-pulse">
+              fallback={(
+                <div className="flex animate-pulse gap-2">
                   <div className="h-7 w-20 rounded-full bg-slate-800" />
                   <div className="h-7 w-24 rounded-full bg-slate-800" />
                 </div>
-              }
+              )}
             >
               <PokemonAbilities id={id} />
             </Suspense>
