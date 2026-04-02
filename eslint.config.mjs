@@ -1,18 +1,52 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import antfu from "@antfu/eslint-config";
+import tanstackPluginQuery from "@tanstack/eslint-plugin-query";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
+export default antfu(
+  {
+    type: "app",
+    nextjs: true,
+    react: true,
+    typescript: true,
+    formatters: true,
+    stylistic: {
+      indent: 2,
+      semi: true,
+      quotes: "double",
+    },
+    ignores: [
+      "**/.next/*",
+      "**/build/*",
+      "**/.husky/*",
+      ".open-next/**",
+    ],
+  },
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    plugins: {
+      "@tanstack/query": tanstackPluginQuery,
+    },
+    rules: {
+      ...tanstackPluginQuery.configs.recommended.rules,
+      "ts/no-redeclare": "off",
+      "ts/consistent-type-definitions": ["error", "type"],
+      "no-console": ["warn"],
+      "antfu/no-top-level-await": ["off"],
+      "perfectionist/sort-imports": [
+        "error",
+      ],
+      "unicorn/filename-case": [
+        "error",
+        {
+          case: "kebabCase",
+          ignore: ["README.md"],
+        },
+      ],
+      "style/jsx-max-props-per-line": ["error", { maximum: 1 }],
+      "no-undef": "off",
+      "node/prefer-global/process": ["off"],
+      "node/no-process-env": ["error"],
+      // Next.js App Router requires default exports for pages/layouts/error/loading
+      "import/no-default-export": "off",
+    },
+  },
+);
