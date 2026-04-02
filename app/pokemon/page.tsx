@@ -1,22 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 
 import { fetchPokemonList, fetchPokemonTypes } from "@/api/request";
 import { GridSkeleton } from "@/components/grid-skeleton";
+import { ListingControls } from "@/components/listing-controls";
 import { Pagination } from "@/components/pagination";
 import { PokemonGrid } from "@/components/pokemon-grid";
 import { FilterProvider } from "@/providers/filter-context";
-
-// Dynamic imports for client components that need useSearchParams
-const SearchBar = dynamic(
-  () => import("@/components/search-bar").then((m) => m.SearchBar),
-  { ssr: false },
-);
-const TypeFilter = dynamic(
-  () => import("@/components/type-filter").then((m) => m.TypeFilter),
-  { ssr: false },
-);
 
 export const metadata: Metadata = {
   title: "Pokédex",
@@ -60,10 +50,9 @@ export default async function PokemonListingPage({ searchParams }: PageProps) {
             </div>
           </div>
 
-          {/* Search + Filter controls */}
-          <div className="mb-6 space-y-3 rounded-2xl border-2 border-slate-800 bg-slate-900 p-4">
-            <SearchBar />
-            <TypeFilter types={types} />
+          {/* Search + Filter controls — client wrapper handles dynamic imports */}
+          <div className="mb-6 rounded-2xl border-2 border-slate-800 bg-slate-900 p-4">
+            <ListingControls types={types} />
           </div>
         </div>
 
