@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import type { PokemonListItem } from "@/types/pokemon";
 import { useQuery } from "@tanstack/react-query";
 
+import { useMemo } from "react";
 import { allPokemonNamesQueryOptions } from "@/api";
 import { EmptyState } from "@/components/empty-state";
 import { PokemonCard } from "@/components/pokemon-card";
-import { useFilter } from "@/providers/filter-context";
-import type { PokemonListItem } from "@/types/pokemon";
+import { useFilter } from "@/hooks/use-filter";
 
 type PokemonGridProps = {
   items: PokemonListItem[];
@@ -20,7 +20,8 @@ export function PokemonGrid({ items }: PokemonGridProps) {
   const { data: allNames } = useQuery(allPokemonNamesQueryOptions());
 
   const filteredItems = useMemo(() => {
-    if (!search) return items;
+    if (!search)
+      return items;
 
     // Filter server-fetched page items by search query
     const query = search.toLowerCase();
@@ -29,13 +30,13 @@ export function PokemonGrid({ items }: PokemonGridProps) {
     if (allNames) {
       const matchingNames = new Set(
         allNames
-          .filter((n) => n.name.includes(query))
-          .map((n) => n.name),
+          .filter(n => n.name.includes(query))
+          .map(n => n.name),
       );
-      return items.filter((p) => matchingNames.has(p.name));
+      return items.filter(p => matchingNames.has(p.name));
     }
 
-    return items.filter((p) => p.name.includes(query));
+    return items.filter(p => p.name.includes(query));
   }, [items, search, allNames]);
 
   if (filteredItems.length === 0) {

@@ -1,8 +1,8 @@
 "use client";
 
+import { useFilter } from "@/hooks/use-filter";
 import { cn } from "@/lib/utils/cn";
 import { getTypeColor } from "@/lib/utils/type-colors";
-import { useFilter } from "@/providers/filter-context";
 
 type TypeFilterProps = {
   types: string[];

@@ -7,7 +7,7 @@ import { TypeFilter } from "./type-filter";
 // SearchBar uses useSearchParams internally — dynamic with ssr:false
 // must live in a Client Component, not a Server Component
 const SearchBar = dynamic(
-  () => import("@/components/search-bar").then((m) => m.SearchBar),
+  () => import("@/components/search-bar").then(m => m.SearchBar),
   { ssr: false },
 );
 

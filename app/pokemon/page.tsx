@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { fetchPokemonList, fetchPokemonTypes } from "@/api/request";
 import { GridSkeleton } from "@/components/grid-skeleton";
@@ -46,7 +46,9 @@ export default async function PokemonListingPage({ searchParams }: PageProps) {
               POKÉDEX
             </h1>
             <div className="ml-auto font-mono text-xs text-green-300/50">
-              {total} ENTRIES
+              {total}
+              {" "}
+              ENTRIES
             </div>
           </div>
 
