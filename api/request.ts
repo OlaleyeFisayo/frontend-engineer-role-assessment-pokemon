@@ -1,48 +1,14 @@
 import type { NamedAPIResource, PaginatedResponse } from "@/types/api";
 import type { PokemonDetail, PokemonListItem, PokemonListResponse } from "@/types/pokemon";
-import type { PokemonDetailPayload, PokemonListPayload } from "./types";
+
+import type {
+  PokemonDetailPayload,
+  PokemonListPayload,
+  RawPokemon,
+  RawTypeDetail,
+} from "./types";
 
 const POKEAPI_BASE = "https://pokeapi.co/api/v2";
-
-// Raw PokéAPI shapes — only used internally in this file
-type RawPokemonSprites = {
-  front_default: string | null;
-  other: {
-    "official-artwork": {
-      front_default: string | null;
-    };
-  };
-};
-
-type RawStat = {
-  base_stat: number;
-  stat: NamedAPIResource;
-};
-
-type RawType = {
-  type: NamedAPIResource;
-};
-
-type RawAbility = {
-  ability: NamedAPIResource;
-  is_hidden: boolean;
-};
-
-type RawPokemon = {
-  id: number;
-  name: string;
-  height: number;
-  weight: number;
-  base_experience: number;
-  sprites: RawPokemonSprites;
-  types: RawType[];
-  stats: RawStat[];
-  abilities: RawAbility[];
-};
-
-type RawTypeDetail = {
-  pokemon: { pokemon: NamedAPIResource }[];
-};
 
 function extractIdFromUrl(url: string): number {
   const parts = url.split("/").filter(Boolean);
@@ -89,7 +55,6 @@ export async function fetchPokemonList(
   const { page, limit, typeFilter } = payload.params;
 
   if (typeFilter) {
-    // Fetch all pokemon of this type, then paginate client-side
     const res = await fetch(`${POKEAPI_BASE}/type/${typeFilter}`, {
       next: { revalidate: 86400 },
     });
@@ -118,7 +83,6 @@ export async function fetchPokemonList(
     return { items, total };
   }
 
-  // No type filter — use the standard list endpoint
   const offset = (page - 1) * limit;
   const listRes = await fetch(
     `${POKEAPI_BASE}/pokemon?limit=${limit}&offset=${offset}`,
@@ -152,7 +116,6 @@ export async function fetchPokemonTypes(): Promise<string[]> {
   });
   if (!res.ok) throw new Error("Failed to fetch pokemon types");
   const data = (await res.json()) as PaginatedResponse<NamedAPIResource>;
-  // Filter out non-battle types
   return data.results
     .map((t) => t.name)
     .filter((name) => name !== "unknown" && name !== "stellar");
