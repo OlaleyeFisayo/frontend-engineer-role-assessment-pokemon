@@ -1,3 +1,5 @@
+import type { PokemonDetailPayload, PokemonListPayload } from "./types";
+
 import { queryOptions } from "@tanstack/react-query";
 
 import {
@@ -6,30 +8,27 @@ import {
   fetchPokemonList,
   fetchPokemonTypes,
 } from "./request";
-import type { PokemonDetailPayload, PokemonListPayload } from "./types";
 
 export const POKEMON_QUERY_KEY = {
-  list: (page: number, type?: string) =>
-    ["pokemon", "list", page, type] as const,
+  list: (page: number, limit: number, type?: string) =>
+    ["pokemon", "list", page, limit, type] as const,
   detail: (id: string | number) => ["pokemon", "detail", id] as const,
   allNames: ["pokemon", "allNames"] as const,
   types: ["pokemon", "types"] as const,
 };
 
 export function pokemonListQueryOptions(payload: PokemonListPayload) {
+  const { page, limit, typeFilter } = payload.params;
   return queryOptions({
-    queryKey: POKEMON_QUERY_KEY.list(
-      payload.params.page,
-      payload.params.typeFilter,
-    ),
-    queryFn: () => fetchPokemonList(payload),
+    queryKey: POKEMON_QUERY_KEY.list(page, limit, typeFilter),
+    queryFn: () => fetchPokemonList({ params: { page, limit, typeFilter } }),
   });
 }
 
 export function pokemonDetailQueryOptions(payload: PokemonDetailPayload) {
   return queryOptions({
     queryKey: POKEMON_QUERY_KEY.detail(payload.id),
-    queryFn: () => fetchPokemonDetail(payload),
+    queryFn: () => fetchPokemonDetail({ id: payload.id }),
   });
 }
 

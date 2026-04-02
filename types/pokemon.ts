@@ -1,3 +1,4 @@
+// Flattened shape used on the listing grid — projected from RawPokemon
 export type PokemonStat = {
   name: string;
   base_stat: number;
@@ -10,18 +11,6 @@ export type PokemonListItem = {
   officialArtwork: string | null;
   types: string[];
   stats: PokemonStat[];
-};
-
-export type PokemonAbility = {
-  name: string;
-  is_hidden: boolean;
-};
-
-export type PokemonDetail = PokemonListItem & {
-  height: number;
-  weight: number;
-  base_experience: number;
-  abilities: PokemonAbility[];
 };
 
 export type PokemonListResponse = {

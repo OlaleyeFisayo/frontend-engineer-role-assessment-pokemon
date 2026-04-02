@@ -1,5 +1,5 @@
 import type { NamedAPIResource, PaginatedResponse } from "@/types/api";
-import type { PokemonDetail, PokemonListItem, PokemonListResponse } from "@/types/pokemon";
+import type { PokemonListItem, PokemonListResponse } from "@/types/pokemon";
 
 import type {
   PokemonDetailPayload,
@@ -12,41 +12,31 @@ const POKEAPI_BASE = "https://pokeapi.co/api/v2";
 
 function extractIdFromUrl(url: string): number {
   const parts = url.split("/").filter(Boolean);
-  return Number(parts[parts.length - 1]);
+  return Number(parts.at(-1));
 }
 
-function normalizePokemon(raw: RawPokemon): PokemonListItem {
+// Projects the raw API shape into the flat PokemonListItem used by the grid
+function toListItem(raw: RawPokemon): PokemonListItem {
   return {
     id: raw.id,
     name: raw.name,
     sprite: raw.sprites.front_default,
     officialArtwork: raw.sprites.other["official-artwork"].front_default,
-    types: raw.types.map((t) => t.type.name),
-    stats: raw.stats.map((s) => ({
-      name: s.stat.name,
-      base_stat: s.base_stat,
-    })),
+    types: raw.types.map(t => t.type.name),
+    stats: raw.stats.map(s => ({ name: s.stat.name, base_stat: s.base_stat })),
   };
 }
 
+// Returns the full raw PokéAPI shape — consumers access nested fields directly
 export async function fetchPokemonDetail(
   payload: PokemonDetailPayload,
-): Promise<PokemonDetail> {
+): Promise<RawPokemon> {
   const res = await fetch(`${POKEAPI_BASE}/pokemon/${payload.id}`, {
     next: { revalidate: 3600 },
   });
-  if (!res.ok) throw new Error(`Failed to fetch pokemon ${payload.id}`);
-  const raw = (await res.json()) as RawPokemon;
-  return {
-    ...normalizePokemon(raw),
-    height: raw.height,
-    weight: raw.weight,
-    base_experience: raw.base_experience,
-    abilities: raw.abilities.map((a) => ({
-      name: a.ability.name,
-      is_hidden: a.is_hidden,
-    })),
-  };
+  if (!res.ok)
+    throw new Error(`Failed to fetch pokemon ${payload.id}`);
+  return (await res.json()) as RawPokemon;
 }
 
 export async function fetchPokemonList(
@@ -58,29 +48,25 @@ export async function fetchPokemonList(
     const res = await fetch(`${POKEAPI_BASE}/type/${typeFilter}`, {
       next: { revalidate: 86400 },
     });
-    if (!res.ok) throw new Error(`Failed to fetch type ${typeFilter}`);
+    if (!res.ok)
+      throw new Error(`Failed to fetch type ${typeFilter}`);
+
     const typeData = (await res.json()) as RawTypeDetail;
-    const allIds = typeData.pokemon.map((p) =>
-      extractIdFromUrl(p.pokemon.url),
-    );
-    const total = allIds.length;
-    const offset = (page - 1) * limit;
-    const pageIds = allIds.slice(offset, offset + limit);
+    const allIds = typeData.pokemon.map(p => extractIdFromUrl(p.pokemon.url));
+    const pageIds = allIds.slice((page - 1) * limit, page * limit);
 
     const items = await Promise.all(
-      pageIds.map((id) =>
-        fetchPokemonDetail({ id }).then((d): PokemonListItem => ({
-          id: d.id,
-          name: d.name,
-          sprite: d.sprite,
-          officialArtwork: d.officialArtwork,
-          types: d.types,
-          stats: d.stats,
-        })),
-      ),
+      pageIds.map(async (id) => {
+        const r = await fetch(`${POKEAPI_BASE}/pokemon/${id}`, {
+          next: { revalidate: 86400 },
+        });
+        if (!r.ok)
+          throw new Error(`Failed to fetch pokemon ${id}`);
+        return toListItem((await r.json()) as RawPokemon);
+      }),
     );
 
-    return { items, total };
+    return { items, total: allIds.length };
   }
 
   const offset = (page - 1) * limit;
@@ -88,13 +74,20 @@ export async function fetchPokemonList(
     `${POKEAPI_BASE}/pokemon?limit=${limit}&offset=${offset}`,
     { next: { revalidate: 86400 } },
   );
-  if (!listRes.ok) throw new Error("Failed to fetch pokemon list");
+  if (!listRes.ok)
+    throw new Error("Failed to fetch pokemon list");
+
   const listData = (await listRes.json()) as PaginatedResponse<NamedAPIResource>;
 
   const items = await Promise.all(
-    listData.results.map((p) => {
+    listData.results.map(async (p) => {
       const id = extractIdFromUrl(p.url);
-      return fetchPokemonDetail({ id });
+      const r = await fetch(`${POKEAPI_BASE}/pokemon/${id}`, {
+        next: { revalidate: 86400 },
+      });
+      if (!r.ok)
+        throw new Error(`Failed to fetch pokemon ${id}`);
+      return toListItem((await r.json()) as RawPokemon);
     }),
   );
 
@@ -105,18 +98,18 @@ export async function fetchAllPokemonNames(): Promise<NamedAPIResource[]> {
   const res = await fetch(`${POKEAPI_BASE}/pokemon?limit=1350&offset=0`, {
     cache: "force-cache",
   });
-  if (!res.ok) throw new Error("Failed to fetch all pokemon names");
+  if (!res.ok)
+    throw new Error("Failed to fetch all pokemon names");
   const data = (await res.json()) as PaginatedResponse<NamedAPIResource>;
   return data.results;
 }
 
 export async function fetchPokemonTypes(): Promise<string[]> {
-  const res = await fetch(`${POKEAPI_BASE}/type`, {
-    cache: "force-cache",
-  });
-  if (!res.ok) throw new Error("Failed to fetch pokemon types");
+  const res = await fetch(`${POKEAPI_BASE}/type`, { cache: "force-cache" });
+  if (!res.ok)
+    throw new Error("Failed to fetch pokemon types");
   const data = (await res.json()) as PaginatedResponse<NamedAPIResource>;
   return data.results
-    .map((t) => t.name)
-    .filter((name) => name !== "unknown" && name !== "stellar");
+    .map(t => t.name)
+    .filter(name => name !== "unknown" && name !== "stellar");
 }
