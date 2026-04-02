@@ -1,14 +1,16 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SearchBar } from "./index";
 
-// ─── Mock FilterContext ────────────────────────────────────────────────────────
+// ─── Mock useFilter ────────────────────────────────────────────────────────────
 
 const mockSetSearch = vi.fn();
 let mockSearch = "";
 
-vi.mock("@/providers/filter-context", () => ({
+vi.mock("@/hooks/use-filter", () => ({
+  // eslint-disable-next-line react/component-hook-factories
   useFilter: () => ({
     search: mockSearch,
     type: "",
@@ -19,23 +21,24 @@ vi.mock("@/providers/filter-context", () => ({
   }),
 }));
 
-// ─── Mock useDebounce — forwards value through a real setTimeout ───────────────
+// ─── Mock useDebounce — real setTimeout so fake timers can control it ─────────
 
 let debounceDelay = 0;
+
 vi.mock("@/hooks/use-debounce", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useDebounce: (value: any) => {
-    const { useState, useEffect } = require("react");
-    const [debounced, setDebounced] = useState<typeof value>(value);
+  // eslint-disable-next-line react/component-hook-factories
+  useDebounce: (value: string) => {
+    const [debounced, setDebounced] = useState(value);
+
     useEffect(() => {
-      const timer = setTimeout(() => setDebounced(value), debounceDelay);
+      const timer = setTimeout(setDebounced, debounceDelay, value);
       return () => clearTimeout(timer);
     }, [value]);
     return debounced;
   },
 }));
 
-describe("SearchBar", () => {
+describe("searchBar", () => {
   beforeEach(() => {
     mockSearch = "";
     debounceDelay = 0;
@@ -78,8 +81,9 @@ describe("SearchBar", () => {
     render(<SearchBar />);
     const input = screen.getByRole("searchbox");
     fireEvent.change(input, { target: { value: "pika" } });
-    // Advance less than debounce delay — setSearch should not have been called
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
     expect(mockSetSearch).not.toHaveBeenCalled();
   });
 
@@ -88,7 +92,9 @@ describe("SearchBar", () => {
     render(<SearchBar />);
     const input = screen.getByRole("searchbox");
     fireEvent.change(input, { target: { value: "pika" } });
-    act(() => { vi.advanceTimersByTime(300); });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(mockSetSearch).toHaveBeenCalledWith("pika");
   });
 
@@ -98,7 +104,9 @@ describe("SearchBar", () => {
     render(<SearchBar />);
     const input = screen.getByRole("searchbox");
     fireEvent.change(input, { target: { value: "" } });
-    act(() => { vi.advanceTimersByTime(0); });
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
     expect(mockSetSearch).toHaveBeenCalledWith("");
   });
 
@@ -108,8 +116,9 @@ describe("SearchBar", () => {
     const input = screen.getByRole("searchbox");
     fireEvent.change(input, { target: { value: "squirtle" } });
     unmount();
-    // After unmount, advancing the timer should NOT trigger setSearch
-    act(() => { vi.advanceTimersByTime(300); });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(mockSetSearch).not.toHaveBeenCalled();
   });
 });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useDebounce } from "@/hooks/use-debounce";
-import { useFilter } from "@/providers/filter-context";
+import { useFilter } from "@/hooks/use-filter";
 
 export function SearchBar() {
   const { search, setSearch } = useFilter();
@@ -17,7 +17,10 @@ export function SearchBar() {
     }
   }, [debouncedValue, search, setSearch]);
 
-  // Sync external URL changes back to input (e.g. browser back/forward)
+  // Sync external URL changes back to input (e.g. browser back/forward).
+  // This intentionally sets state in an effect — it's the correct pattern
+  // for synchronising controlled input with an external URL state source.
+
   useEffect(() => {
     setInputValue(search);
   }, [search]);
@@ -40,7 +43,7 @@ export function SearchBar() {
         id="pokemon-search"
         type="search"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={e => setInputValue(e.target.value)}
         placeholder="SEARCH POKÉMON..."
         aria-label="Search Pokémon"
         className="w-full rounded-xl border-2 border-green-300 bg-slate-900 py-2.5 pl-10 pr-4 font-mono text-sm text-green-300 placeholder-green-300/40 outline-none transition-colors focus:border-green-400 focus:ring-1 focus:ring-green-400"

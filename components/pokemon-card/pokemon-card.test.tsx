@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
 import type { PokemonListItem } from "@/types/pokemon";
+import { render, screen } from "@testing-library/react";
+
+import { describe, expect, it, vi } from "vitest";
 
 import { PokemonCard } from "./index";
 
@@ -56,7 +56,7 @@ const basePokemon: PokemonListItem = {
   ],
 };
 
-describe("PokemonCard", () => {
+describe("pokemonCard", () => {
   it("renders the pokémon name", () => {
     render(<PokemonCard pokemon={basePokemon} />);
     expect(screen.getByText("bulbasaur")).toBeInTheDocument();
