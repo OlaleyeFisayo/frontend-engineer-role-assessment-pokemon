@@ -42,7 +42,34 @@ export async function fetchPokemonDetail(
 export async function fetchPokemonList(
   payload: PokemonListPayload,
 ): Promise<PokemonListResponse> {
-  const { page, limit, typeFilter } = payload.params;
+  const { page, limit, typeFilter, searchQuery } = payload.params;
+
+  // Search mode: filter all 1,350 names, paginate matches, batch-fetch details
+  if (searchQuery) {
+    const allRes = await fetch(`${POKEAPI_BASE}/pokemon?limit=1350&offset=0`, {
+      cache: "force-cache",
+    });
+    if (!allRes.ok)
+      throw new Error("Failed to fetch all pokemon names for search");
+    const allData = (await allRes.json()) as PaginatedResponse<NamedAPIResource>;
+    const query = searchQuery.toLowerCase();
+    const matched = allData.results.filter(p => p.name.includes(query));
+    const pageMatches = matched.slice((page - 1) * limit, page * limit);
+
+    const items = await Promise.all(
+      pageMatches.map(async (p) => {
+        const id = extractIdFromUrl(p.url);
+        const r = await fetch(`${POKEAPI_BASE}/pokemon/${id}`, {
+          next: { revalidate: 86400 },
+        });
+        if (!r.ok)
+          throw new Error(`Failed to fetch pokemon ${id}`);
+        return toListItem((await r.json()) as RawPokemon);
+      }),
+    );
+
+    return { items, total: matched.length };
+  }
 
   if (typeFilter) {
     const res = await fetch(`${POKEAPI_BASE}/type/${typeFilter}`, {

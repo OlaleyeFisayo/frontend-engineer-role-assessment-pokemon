@@ -10,18 +10,18 @@ import {
 } from "./request";
 
 export const POKEMON_QUERY_KEY = {
-  list: (page: number, limit: number, type?: string) =>
-    ["pokemon", "list", page, limit, type] as const,
+  list: (page: number, limit: number, type?: string, search?: string) =>
+    ["pokemon", "list", page, limit, type, search] as const,
   detail: (id: string | number) => ["pokemon", "detail", id] as const,
   allNames: ["pokemon", "allNames"] as const,
   types: ["pokemon", "types"] as const,
 };
 
 export function pokemonListQueryOptions(payload: PokemonListPayload) {
-  const { page, limit, typeFilter } = payload.params;
+  const { page, limit, typeFilter, searchQuery } = payload.params;
   return queryOptions({
-    queryKey: POKEMON_QUERY_KEY.list(page, limit, typeFilter),
-    queryFn: () => fetchPokemonList({ params: { page, limit, typeFilter } }),
+    queryKey: POKEMON_QUERY_KEY.list(page, limit, typeFilter, searchQuery),
+    queryFn: () => fetchPokemonList({ params: { page, limit, typeFilter, searchQuery } }),
   });
 }
 

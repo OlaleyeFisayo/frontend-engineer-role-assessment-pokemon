@@ -7,6 +7,7 @@ export type PokemonListPayload = {
     page: number;
     limit: number;
     typeFilter?: string;
+    searchQuery?: string;
   };
 };
 

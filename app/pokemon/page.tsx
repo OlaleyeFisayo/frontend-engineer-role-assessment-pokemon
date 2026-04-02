@@ -16,17 +16,23 @@ export const metadata: Metadata = {
 const ITEMS_PER_PAGE = 24;
 
 type PageProps = {
-  searchParams: Promise<{ page?: string; type?: string }>;
+  searchParams: Promise<{ page?: string; type?: string; q?: string }>;
 };
 
 export default async function PokemonListingPage({ searchParams }: PageProps) {
-  const { page: pageParam, type: typeParam } = await searchParams;
+  const { page: pageParam, type: typeParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam ?? "1"));
   const typeFilter = typeParam ?? "";
+  const searchQuery = q ?? "";
 
   const [{ items, total }, types] = await Promise.all([
     fetchPokemonList({
-      params: { page, limit: ITEMS_PER_PAGE, typeFilter: typeFilter || undefined },
+      params: {
+        page,
+        limit: ITEMS_PER_PAGE,
+        typeFilter: typeFilter || undefined,
+        searchQuery: searchQuery || undefined,
+      },
     }),
     fetchPokemonTypes(),
   ]);
