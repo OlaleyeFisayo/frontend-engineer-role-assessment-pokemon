@@ -1,9 +1,9 @@
+import type { PokemonListItem } from "@/types/pokemon";
 import Image from "next/image";
-import Link from "next/link";
 
+import Link from "next/link";
 import { StatBar } from "@/components/stat-bar";
 import { TypeBadge } from "@/components/type-badge";
-import type { PokemonListItem } from "@/types/pokemon";
 
 type PokemonCardProps = {
   pokemon: PokemonListItem;
@@ -18,8 +18,8 @@ export function PokemonCard({ pokemon, priority = false }: PokemonCardProps) {
       ?? "/pokemon-fallback.svg";
 
   const paddedId = String(id).padStart(3, "0");
-  const hp = stats.find((s) => s.name === "hp");
-  const speed = stats.find((s) => s.name === "speed");
+  const hp = stats.find(s => s.name === "hp");
+  const speed = stats.find(s => s.name === "speed");
 
   return (
     <Link
@@ -31,7 +31,7 @@ export function PokemonCard({ pokemon, priority = false }: PokemonCardProps) {
       <div className="mb-3 rounded-2xl bg-slate-900 p-3">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
-            {types.map((type) => (
+            {types.map(type => (
               <TypeBadge
                 key={type}
                 type={type}
@@ -39,7 +39,8 @@ export function PokemonCard({ pokemon, priority = false }: PokemonCardProps) {
             ))}
           </div>
           <span className="font-mono text-xs font-bold text-green-300">
-            #{paddedId}
+            #
+            {paddedId}
           </span>
         </div>
         <h2 className="font-black uppercase tracking-wider text-white">

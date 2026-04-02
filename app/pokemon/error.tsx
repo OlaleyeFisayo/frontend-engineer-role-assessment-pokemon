@@ -19,7 +19,9 @@ export default function PokemonListingError({ error, reset }: ErrorProps) {
           </p>
           {error.digest && (
             <p className="mt-1 font-mono text-xs text-green-300/50">
-              Code: {error.digest}
+              Code:
+              {" "}
+              {error.digest}
             </p>
           )}
         </div>

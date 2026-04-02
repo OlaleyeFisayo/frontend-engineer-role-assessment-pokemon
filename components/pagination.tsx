@@ -1,6 +1,6 @@
 "use client";
 
-import { useFilter } from "@/providers/filter-context";
+import { useFilter } from "@/hooks/use-filter";
 
 type PaginationProps = {
   total: number;
@@ -11,7 +11,8 @@ export function Pagination({ total, perPage }: PaginationProps) {
   const { page, setPage } = useFilter();
   const totalPages = Math.ceil(total / perPage);
 
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1)
+    return null;
 
   const isFirst = page <= 1;
   const isLast = page >= totalPages;
@@ -38,7 +39,7 @@ export function Pagination({ total, perPage }: PaginationProps) {
         &lt;&lt;
       </button>
 
-      {getPageNumbers().map((p) => (
+      {getPageNumbers().map(p => (
         <button
           key={p}
           onClick={() => setPage(p)}

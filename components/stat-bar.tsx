@@ -8,12 +8,12 @@ type StatBarProps = {
 };
 
 const STAT_ABBREVIATIONS: Record<string, string> = {
-  hp: "HP",
-  attack: "ATK",
-  defense: "DEF",
+  "hp": "HP",
+  "attack": "ATK",
+  "defense": "DEF",
   "special-attack": "SpA",
   "special-defense": "SpD",
-  speed: "SPD",
+  "speed": "SPD",
 };
 
 export function StatBar({
