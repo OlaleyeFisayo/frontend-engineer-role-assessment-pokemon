@@ -1,23 +1,9 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo } from "react";
 
-type FilterState = {
-  search: string;
-  type: string;
-  page: number;
-  setSearch: (value: string) => void;
-  setType: (value: string) => void;
-  setPage: (value: number) => void;
-};
-
-const FilterContext = createContext<FilterState | null>(null);
+import { FilterContext } from "./filter-context-value";
 
 export function FilterProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -31,17 +17,22 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     (updates: Partial<{ q: string; type: string; page: number }>) => {
       const params = new URLSearchParams(searchParams.toString());
       if ("q" in updates) {
-        if (updates.q) params.set("q", updates.q);
-        else params.delete("q");
+        if (updates.q)
+          params.set("q", updates.q);
+        else
+          params.delete("q");
       }
       if ("type" in updates) {
-        if (updates.type) params.set("type", updates.type);
-        else params.delete("type");
+        if (updates.type)
+          params.set("type", updates.type);
+        else
+          params.delete("type");
       }
       if ("page" in updates) {
         if (updates.page && updates.page > 1)
           params.set("page", String(updates.page));
-        else params.delete("page");
+        else
+          params.delete("page");
       }
       const qs = params.toString();
       return qs ? `/pokemon?${qs}` : "/pokemon";
@@ -76,16 +67,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <FilterContext.Provider value={contextValue}>
+    <FilterContext value={contextValue}>
       {children}
-    </FilterContext.Provider>
+    </FilterContext>
   );
-}
-
-export function useFilter(): FilterState {
-  const context = useContext(FilterContext);
-  if (!context) {
-    throw new Error("useFilter must be used within a FilterProvider");
-  }
-  return context;
 }
