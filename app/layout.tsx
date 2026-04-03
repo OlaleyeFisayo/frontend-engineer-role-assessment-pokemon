@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     template: "%s | Pokédex Explorer",
   },
   description: "Browse, search, and filter all 1,350 Pokémon",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
