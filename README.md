@@ -1,8 +1,10 @@
 # Pokémon Explorer
 
-A production-quality Pokédex web app built as a take-home assessment. Browse, search, and filter all 1,350 Pokémon with a classic Pokédex hardware aesthetic.
+A Pokédex web app built for the Checkit Frontend Engineer take-home assessment. Browse, search, and filter all Pokémon with a classic Pokédex hardware aesthetic.
 
-**Stack:** Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS v4 · TanStack Query v5 · React Context · Cloudflare Workers via OpenNext
+**Live:** _[Cloudflare Workers URL — added after deployment]_
+
+**Stack:** Next.js 16 (App Router) · TypeScript strict · Tailwind CSS v4 · React Context · Cloudflare Workers via OpenNext
 
 ---
 
@@ -12,8 +14,8 @@ A production-quality Pokédex web app built as a take-home assessment. Browse, s
 npm install
 npm run dev        # http://localhost:3000
 npm test           # 16 unit tests
-npm run lint       # ESLint with @antfu/eslint-config
-npm run build      # Production build (157 pages)
+npm run lint       # ESLint
+npm run build      # Production build
 ```
 
 **Requirements:** Node.js 20+, npm 10+
@@ -22,80 +24,86 @@ npm run build      # Production build (157 pages)
 
 ## Features
 
-| Feature                  | Implementation                                            |
-| ------------------------ | --------------------------------------------------------- |
-| Browse all 1,350 Pokémon | Paginated grid (24/page), SSR via `fetchPokemonList`      |
-| Search by name           | 300ms debounced client-side filter over all names         |
-| Filter by type           | URL param `?type=` — server re-fetches type endpoint      |
-| Detail page              | Official artwork, stats, abilities, height, weight        |
-| Loading states           | Skeleton loaders with Pokédex aesthetic + `animate-pulse` |
-| Error states             | Friendly error boundary with reset button                 |
+| Feature | Implementation |
+|---|---|
+| Browse all Pokémon | Paginated grid (24/page), server-rendered with ISR |
+| Search by name | 300ms debounced input, server-side match across all entries |
+| Filter by type | `?type=` URL param, server re-fetches PokéAPI type endpoint |
+| Detail page | Official artwork, base stats, abilities, height, weight |
+| Shareable URLs | All filters and pagination live in the URL (`?q=`, `?type=`, `?page=`) |
+| Loading states | Skeleton loaders matching the Pokédex aesthetic |
+| Error states | Isolated error boundary — header stays intact on network failure |
 
 ---
 
-## Architecture Decisions
+## Architecture
 
-### URL-driven state (no client state store)
+### Data fetching — native `fetch` with Next.js cache
 
-Filter, search, and page are all URL query params (`?q=`, `?type=`, `?page=`). This gives free SSR compatibility, shareable URLs (requirement F-3), browser history navigation, and zero hydration mismatch. A `FilterContext` wraps the listing page to share parsed values across `SearchBar`, `TypeFilter`, and `PokemonGrid` without prop drilling.
+All data fetching uses native `fetch` inside Server Components with Next.js cache options. No client-side data fetching library is used.
 
-### Client-side search over all names
+- `force-cache` for static data (all Pokémon names, type list) — fetched once, cached indefinitely
+- `next: { revalidate: 3600 }` on detail pages — ISR, served from edge, refreshed hourly
+- `next: { revalidate: 86400 }` on listing pages — refreshed daily
 
-PokéAPI has no server-side search endpoint. Instead, all 1,350 Pokémon names (~60 KB) are fetched once into TanStack Query cache with `staleTime: Infinity` and filtered client-side with a 300ms debounce. This is faster than hitting the API on every keystroke and avoids pagination complexity for search results.
+All `fetch` calls are isolated in `api/request.ts`. No component calls `fetch` directly.
 
-### Type filter via server-side fetch
+### State management — React Context
 
-When `?type=` is set, the listing page calls `GET /type/{name}` which returns all Pokémon of that type. This avoids loading all 1,350 Pokémon into the browser just to filter them.
+`FilterContext` holds `search`, `type`, and `page` — the three values that drive what data is shown. It is the only global state in the app.
 
-### Fetch-only API layer (`api/request.ts`)
+- State is derived from and synced back to URL params so URLs are always shareable
+- `useMemo` on the context value object prevents unnecessary re-renders in consumers
+- `useCallback` on setters gives them stable identity as `useMemo` dependencies
+- `useFilter()` hook uses the React 19 `use()` API to consume the context
 
-All `fetch` calls are isolated in a single file. This separation means fetch logic is testable without React hooks, and functions are importable directly by both Server Components and client-side code without needing React hook wrappers.
+### URL-driven state
 
-`fetchPokemonDetail` returns `Promise<RawPokemon>` — the raw PokéAPI shape — so consumers access nested fields directly (`raw.sprites.other["official-artwork"].front_default`). No intermediate mapping is done; the type system documents what fields exist.
+All filters live in the URL (`?q=pikachu&type=fire&page=2`). This gives shareable URLs, free browser back/forward navigation, SSR compatibility, and zero hydration mismatch — with no extra state synchronisation needed.
 
-### TanStack Query for client data
+### Search
 
-- **Default `staleTime: 10 min`** — avoids re-fetching on every navigation
-- **`staleTime: Infinity`** for Pokémon names and types — these never change
-- **`queryOptions()` pattern** — not wrapper hooks, so options can be passed to both `useQuery` and server-side `prefetchQuery` without duplication
+PokéAPI has no search endpoint. When `?q=` is present, the server fetches all Pokémon names (cached with `force-cache`), filters by the query, paginates the matches, then batch-fetches the matching Pokémon details. Results are correct across the full Pokédex, not just the current page.
 
-### Justified memoization only
+### Error resilience
 
-- `useMemo` on FilterContext value object — prevents all consumers re-rendering on every parent render
-- `useCallback` on `setSearch`/`setType`/`setPage` — these are dependencies of the context value `useMemo`, so they must have stable identity
-- No speculative memoization on leaf components (cards, badges, bars) — they receive stable props and have no expensive derived computation
+The listing page uses a React class `ErrorBoundary` around the grid section. If the data fetch fails, the header, search bar, and type filter stay intact — only the grid shows a retry UI. The detail page has its own `error.tsx` with `router.back()` so users are never trapped.
 
-### `type` over `interface` everywhere
+### `type` over `interface`
 
-Enforced by ESLint rule `ts/consistent-type-definitions: ["error", "type"]`. Consistent, composable, and avoids declaration merging surprises.
+Enforced by ESLint (`ts/consistent-type-definitions: ["error", "type"]`). Consistent, avoids declaration merging surprises, and composable with intersection types.
 
 ---
 
-## Performance Optimizations
+## Performance
 
-| Technique                             | Where                                       | Effect                                                          |
-| ------------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
-| `next/image` with explicit dimensions | `PokemonCard`, detail hero                  | Prevents CLS; browser reserves correct space before image loads |
-| `priority` on first 4 cards           | `PokemonCard` (index < 4)                   | Improves LCP — hero images above the fold are not lazy-loaded   |
-| ISR with `revalidate`                 | Detail pages: 1h, List/API route: 1d        | Static pages served from CDN edge, no cold-start latency        |
-| `force-cache` for static data         | `fetchAllPokemonNames`, `fetchPokemonTypes` | Fetched once at build time, served from cache forever           |
-| `next/font` (Inter)                   | Root layout                                 | Eliminates FOUT (flash of unstyled text), reduces CLS           |
-| Suspense streaming                    | Stats + Abilities sections on detail page   | Page shell renders immediately; heavy sections stream in (B-2)  |
-| `dynamic(..., { ssr: false })`        | `SearchBar`, `TypeFilter`                   | Client-only components split from server bundle                 |
+| Technique | Where | Effect |
+|---|---|---|
+| `next/image` with explicit sizes | `PokemonCard`, detail hero | Prevents CLS; space reserved before image loads |
+| `priority` on first 4 cards | `PokemonCard` (index < 4) | Improves LCP — above-the-fold images not lazy-loaded |
+| ISR (`revalidate`) | Detail: 1h, Listing: 1d | Pages served from CDN edge, no cold-start per user |
+| `force-cache` for static data | Names list, type list | Fetched once at build, served from cache forever |
+| `next/font` | Root layout | Eliminates FOUT, reduces CLS |
+| Suspense streaming | Stats + Abilities on detail page | Page shell renders immediately, sections stream in |
+| `dynamic(..., { ssr: false })` | `SearchBar`, `TypeFilter` | Client-only components excluded from server bundle |
+
+### Lighthouse scores
+
+_[To be added after Cloudflare deployment]_
 
 ---
 
 ## Testing
 
-Two components tested to 100% coverage:
+Two components tested with Vitest + React Testing Library:
 
-**`PokemonCard`** — chosen because it is the highest-impact component (rendered 24× per page, controls LCP and CLS) with the most branching logic: image fallback chain (officialArtwork → sprite → SVG), `priority` prop conditionally set, type badge rendering, stat bar values.
+**`PokemonCard`** — highest-impact component (rendered 24× per page, drives LCP and CLS). Tests cover: image fallback chain (official artwork → sprite → SVG fallback), `priority` prop on first 4 cards, type badge rendering, stat bar values.
 
-**`SearchBar`** — chosen because it encapsulates a non-trivial async interaction: debounced input → context write → URL update. The debounce timing, cleanup on unmount, and integration with FilterContext all needed explicit verification.
+**`SearchBar`** — non-trivial async interaction: debounced input → context write → URL update. Tests cover: debounce timing with fake timers, no premature context writes during typing, URL sync on external change, cleanup on unmount.
 
 ```bash
-npm test                    # run tests
-npm run test:coverage       # with v8 coverage report
+npm test                 # run all tests
+npm run test:coverage    # with v8 coverage report
 ```
 
 ---
@@ -104,16 +112,15 @@ npm run test:coverage       # with v8 coverage report
 
 ### B-2: Suspense Streaming
 
-The detail page wraps `<PokemonStats>` and `<PokemonAbilities>` in `<Suspense>` boundaries. The page shell (header, image, info grid) renders immediately while stats and abilities stream in. Skeleton fallbacks match the Pokédex card aesthetic.
+`PokemonStats` and `PokemonAbilities` on the detail page are each wrapped in `<Suspense>`. The page shell (header, image, info grid) renders and streams to the browser immediately. Stats and abilities follow as their fetches resolve, with skeleton fallbacks in the meantime.
 
 ### B-3: Accessibility
 
 - All images have descriptive `alt` text
-- Pagination uses `aria-label` on nav, `aria-current="page"` on active page button
-- Type badges have sufficient color contrast (white text on colored backgrounds)
-- Search input has `aria-label="Search Pokémon"` and `role="searchbox"` via `type="search"`
-- Screen-only scan-line overlay divs are `aria-hidden="true"`
-- Error pages include a focus-visible reset button
+- Pagination `<nav>` has `aria-label`, active page has `aria-current="page"`
+- Search input has `aria-label` and `type="search"`
+- Decorative scan-line overlays are `aria-hidden="true"`
+- Error pages have a focus-visible retry button
 
 ---
 
@@ -121,38 +128,43 @@ The detail page wraps `<PokemonStats>` and `<PokemonAbilities>` in `<Suspense>` 
 
 ```
 app/
-  pokemon/page.tsx          # Listing page (SSR + ISR)
-  pokemon/[id]/page.tsx     # Detail page (SSG first 151 + ISR)
-  api/pokemon-names/        # Internal route: all names for search
+  pokemon/page.tsx           # Listing page (SSR + ISR)
+  pokemon/[id]/page.tsx      # Detail page (SSG first 151 + ISR)
+  pokemon/error.tsx          # Listing error boundary
+  pokemon/[id]/error.tsx     # Detail error boundary (router.back)
 
 api/
-  request.ts                # Only file that calls fetch
-  types.ts                  # Raw PokéAPI shapes + payload types
+  request.ts                 # Only file that calls fetch
+  types.ts                   # Raw PokéAPI shapes + payload types
 
 components/
-  pokemon-card/             # Grid card (with co-located test)
-  search-bar/               # Debounced search (with co-located test)
-  listing-controls.tsx      # Client wrapper for dynamic imports
+  pokemon-card/              # Grid card (with co-located tests)
+  search-bar/                # Debounced search input (with co-located tests)
+  pokemon-grid-section.tsx   # Fetches + renders the paginated grid
+  pokemon-stats.tsx          # Streamed stats section (Server Component)
+  pokemon-abilities.tsx      # Streamed abilities section (Server Component)
+  type-filter-section.tsx    # Fetches types + renders controls
+  grid-error-boundary.tsx    # React class ErrorBoundary for the grid
 
 providers/
-  filter-context-value.ts   # FilterContext + FilterState (non-client)
-  filter-context.tsx        # FilterProvider component
+  filter-context-value.ts    # FilterContext + FilterState type
+  filter-context.tsx         # FilterProvider (URL ↔ context sync)
 
 hooks/
-  use-filter.ts             # useFilter() with React 19 use()
-  use-debounce.ts           # Generic debounce hook
+  use-filter.ts              # useFilter() using React 19 use()
+  use-debounce.ts            # Generic debounce hook
 
 types/
-  pokemon.ts                # PokemonListItem, PokemonListResponse
-  api.ts                    # PaginatedResponse<T>, NamedAPIResource
+  pokemon.ts                 # PokemonListItem, PokemonListResponse
+  api.ts                     # PaginatedResponse<T>, NamedAPIResource
 ```
 
 ---
 
 ## Trade-offs
 
-**Batch fetching on listing page** — Each page load fires 24 parallel `fetch` calls to get sprite/type/stat data (PokéAPI's list endpoint only returns names and URLs). This is mitigated by ISR (`revalidate: 86400`) so the 24 fetches only happen on the server during build/revalidation, never per-user-request.
+**24 parallel fetches per listing page** — PokéAPI's list endpoint returns only names and URLs, so getting sprite/type/stat data requires one fetch per Pokémon. Mitigated by ISR — these fetches happen once on the server at build/revalidation time, never per user request.
 
-**No infinite scroll** — Pagination was chosen over infinite scroll because infinite scroll loses URL shareability (the assessment explicitly requires shareable URLs), is harder to make accessible, and has worse CLS characteristics with dynamic content insertion.
+**No infinite scroll** — Pagination was chosen because infinite scroll breaks URL shareability (a stated requirement), is harder to make accessible, and has worse CLS with dynamic content insertion.
 
-**Search over client-side names only** — The 1,350-name fetch adds ~60 KB to first load. Given `staleTime: Infinity` and `force-cache`, this happens once per session and is acceptable. If the Pokédex grew to 10,000+ entries, a server-side search endpoint would be needed.
+**Server-side search** — When `?q=` is set, the server fetches all Pokémon names to match against. With `force-cache` this is a single cached response. The trade-off vs. a proper search endpoint is negligible at the current scale (~1,300 entries, ~60 KB payload).
