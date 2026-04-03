@@ -24,15 +24,15 @@ npm run build      # Production build
 
 ## Features
 
-| Feature | Implementation |
-|---|---|
-| Browse all Pokémon | Paginated grid (24/page), server-rendered with ISR |
-| Search by name | 300ms debounced input, server-side match across all entries |
-| Filter by type | `?type=` URL param, server re-fetches PokéAPI type endpoint |
-| Detail page | Official artwork, base stats, abilities, height, weight |
-| Shareable URLs | All filters and pagination live in the URL (`?q=`, `?type=`, `?page=`) |
-| Loading states | Skeleton loaders matching the Pokédex aesthetic |
-| Error states | Isolated error boundary — header stays intact on network failure |
+| Feature            | Implementation                                                         |
+| ------------------ | ---------------------------------------------------------------------- |
+| Browse all Pokémon | Paginated grid (24/page), server-rendered with ISR                     |
+| Search by name     | 300ms debounced input, server-side match across all entries            |
+| Filter by type     | `?type=` URL param, server re-fetches PokéAPI type endpoint            |
+| Detail page        | Official artwork, base stats, abilities, height, weight                |
+| Shareable URLs     | All filters and pagination live in the URL (`?q=`, `?type=`, `?page=`) |
+| Loading states     | Skeleton loaders matching the Pokédex aesthetic                        |
+| Error states       | Isolated error boundary — header stays intact on network failure       |
 
 ---
 
@@ -77,15 +77,15 @@ Enforced by ESLint (`ts/consistent-type-definitions: ["error", "type"]`). Consis
 
 ## Performance
 
-| Technique | Where | Effect |
-|---|---|---|
-| `next/image` with explicit sizes | `PokemonCard`, detail hero | Prevents CLS; space reserved before image loads |
-| `priority` on first 4 cards | `PokemonCard` (index < 4) | Improves LCP — above-the-fold images not lazy-loaded |
-| ISR (`revalidate`) | Detail: 1h, Listing: 1d | Pages served from CDN edge, no cold-start per user |
-| `force-cache` for static data | Names list, type list | Fetched once at build, served from cache forever |
-| `next/font` | Root layout | Eliminates FOUT, reduces CLS |
-| Suspense streaming | Stats + Abilities on detail page | Page shell renders immediately, sections stream in |
-| `dynamic(..., { ssr: false })` | `SearchBar`, `TypeFilter` | Client-only components excluded from server bundle |
+| Technique                        | Where                            | Effect                                               |
+| -------------------------------- | -------------------------------- | ---------------------------------------------------- |
+| `next/image` with explicit sizes | `PokemonCard`, detail hero       | Prevents CLS; space reserved before image loads      |
+| `priority` on first 4 cards      | `PokemonCard` (index < 4)        | Improves LCP — above-the-fold images not lazy-loaded |
+| ISR (`revalidate`)               | Detail: 1h, Listing: 1d          | Pages served from CDN edge, no cold-start per user   |
+| `force-cache` for static data    | Names list, type list            | Fetched once at build, served from cache forever     |
+| `next/font`                      | Root layout                      | Eliminates FOUT, reduces CLS                         |
+| Suspense streaming               | Stats + Abilities on detail page | Page shell renders immediately, sections stream in   |
+| `dynamic(..., { ssr: false })`   | `SearchBar`, `TypeFilter`        | Client-only components excluded from server bundle   |
 
 ### Lighthouse scores
 

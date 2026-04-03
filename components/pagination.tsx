@@ -31,12 +31,21 @@ export function Pagination({ total, perPage }: PaginationProps) {
       className="mt-10 flex items-center justify-center gap-2 font-mono"
     >
       <button
+        onClick={() => setPage(1)}
+        disabled={isFirst}
+        aria-label="First page"
+        className="rounded-lg border-2 border-green-300 bg-slate-900 px-3 py-1.5 text-sm font-bold text-green-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        |&lt;
+      </button>
+
+      <button
         onClick={() => setPage(page - 1)}
         disabled={isFirst}
         aria-label="Previous page"
         className="rounded-lg border-2 border-green-300 bg-slate-900 px-3 py-1.5 text-sm font-bold text-green-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        &lt;&lt;
+        &lt;
       </button>
 
       {getPageNumbers().map(p => (
@@ -61,7 +70,16 @@ export function Pagination({ total, perPage }: PaginationProps) {
         aria-label="Next page"
         className="rounded-lg border-2 border-green-300 bg-slate-900 px-3 py-1.5 text-sm font-bold text-green-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        &gt;&gt;
+        &gt;
+      </button>
+
+      <button
+        onClick={() => setPage(totalPages)}
+        disabled={isLast}
+        aria-label="Last page"
+        className="rounded-lg border-2 border-green-300 bg-slate-900 px-3 py-1.5 text-sm font-bold text-green-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        &gt;|
       </button>
     </nav>
   );
