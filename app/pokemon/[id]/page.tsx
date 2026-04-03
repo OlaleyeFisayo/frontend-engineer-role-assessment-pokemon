@@ -5,7 +5,8 @@ import { Suspense } from "react";
 import { fetchPokemonDetail } from "@/api/request";
 import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
-import { StatBar } from "@/components/stat-bar";
+import { PokemonAbilities } from "@/components/pokemon-abilities";
+import { PokemonStats } from "@/components/pokemon-stats";
 import { TypeBadge } from "@/components/type-badge";
 
 type PageProps = {
@@ -34,44 +35,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-async function PokemonStats({ id }: { id: string }) {
-  const raw = await fetchPokemonDetail({ id });
-  return (
-    <div className="space-y-1.5">
-      {raw.stats.map(s => (
-        <StatBar
-          key={s.stat.name}
-          name={s.stat.name}
-          value={s.base_stat}
-        />
-      ))}
-    </div>
-  );
-}
-
-async function PokemonAbilities({ id }: { id: string }) {
-  const raw = await fetchPokemonDetail({ id });
-  return (
-    <div className="flex flex-wrap gap-2">
-      {raw.abilities.map(a => (
-        <span
-          key={a.ability.name}
-          className={`rounded-full border px-3 py-1 font-mono text-xs capitalize ${
-            a.is_hidden
-              ? "border-green-300/30 text-green-300/50"
-              : "border-green-300 text-green-300"
-          }`}
-        >
-          {a.ability.name}
-          {a.is_hidden && (
-            <span className="ml-1 text-green-300/40">(hidden)</span>
-          )}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export default async function PokemonDetailPage({ params }: PageProps) {
   const { id } = await params;
   const raw = await fetchPokemonDetail({ id });
@@ -98,7 +61,7 @@ export default async function PokemonDetailPage({ params }: PageProps) {
         <div className="rounded-3xl border-4 border-slate-900 bg-red-700 p-6 shadow-2xl shadow-black/50">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="font-black uppercase tracking-widest text-white text-2xl">
+            <h1 className="text-2xl font-black uppercase tracking-widest text-white">
               {displayName}
             </h1>
             <span className="font-mono font-bold text-green-300">
@@ -161,7 +124,7 @@ export default async function PokemonDetailPage({ params }: PageProps) {
             ))}
           </div>
 
-          {/* Stats — streamed via Suspense (B-2) */}
+          {/* Stats — streamed via Suspense */}
           <div className="mb-4 rounded-2xl bg-slate-900 p-4">
             <h2 className="mb-3 font-mono text-xs font-bold uppercase tracking-wider text-green-300/50">
               BASE STATS
@@ -183,7 +146,7 @@ export default async function PokemonDetailPage({ params }: PageProps) {
             </Suspense>
           </div>
 
-          {/* Abilities — streamed via Suspense (B-2) */}
+          {/* Abilities — streamed via Suspense */}
           <div className="rounded-2xl bg-slate-900 p-4">
             <h2 className="mb-3 font-mono text-xs font-bold uppercase tracking-wider text-green-300/50">
               ABILITIES

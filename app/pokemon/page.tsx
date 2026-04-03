@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { fetchPokemonList, fetchPokemonTypes } from "@/api/request";
 import { GridErrorBoundary } from "@/components/grid-error-boundary";
 import { GridSkeleton } from "@/components/grid-skeleton";
-import { ListingControls } from "@/components/listing-controls";
-import { Pagination } from "@/components/pagination";
-import { PokemonGrid } from "@/components/pokemon-grid";
+import { PokemonGridSection } from "@/components/pokemon-grid-section";
+import { TypeFilterSection } from "@/components/type-filter-section";
 import { FilterProvider } from "@/providers/filter-context";
 
 export const metadata: Metadata = {
@@ -14,47 +12,15 @@ export const metadata: Metadata = {
   description: "Browse and search all Pokémon",
 };
 
-const ITEMS_PER_PAGE = 24;
-
 type PageProps = {
   searchParams: Promise<{ page?: string; type?: string; q?: string }>;
 };
-
-type GridProps = {
-  page: number;
-  typeFilter?: string;
-  searchQuery?: string;
-};
-
-async function PokemonGridSection({ page, typeFilter, searchQuery }: GridProps) {
-  const { items, total } = await fetchPokemonList({
-    params: { page, limit: ITEMS_PER_PAGE, typeFilter, searchQuery },
-  });
-
-  return (
-    <>
-      <PokemonGrid items={items} />
-      <Pagination
-        total={total}
-        perPage={ITEMS_PER_PAGE}
-      />
-    </>
-  );
-}
-
-async function TypeFilterSection({ types }: { types?: string[] }) {
-  const resolved = types ?? await fetchPokemonTypes().catch(() => []);
-  return <ListingControls types={resolved} />;
-}
 
 export default async function PokemonListingPage({ searchParams }: PageProps) {
   const { page: pageParam, type: typeParam, q } = await searchParams;
   const page = Math.max(1, Number(pageParam ?? "1"));
   const typeFilter = typeParam || undefined;
   const searchQuery = q || undefined;
-
-  // Fetch types independently so a types failure doesn't kill the grid
-  const typesPromise = fetchPokemonTypes().catch(() => []);
 
   return (
     <FilterProvider>
@@ -75,12 +41,12 @@ export default async function PokemonListingPage({ searchParams }: PageProps) {
           {/* Controls — degrade gracefully if types fetch fails */}
           <div className="mb-6 rounded-2xl border-2 border-slate-800 bg-slate-900 p-4">
             <Suspense fallback={<div className="h-10 animate-pulse rounded-xl bg-slate-800" />}>
-              <TypeFilterSection types={await typesPromise} />
+              <TypeFilterSection />
             </Suspense>
           </div>
         </div>
 
-        {/* Grid — isolated Suspense + inline error boundary keeps header intact */}
+        {/* Grid — isolated Suspense + error boundary keeps header intact */}
         <div className="mx-auto max-w-7xl">
           <GridErrorBoundary>
             <Suspense fallback={<GridSkeleton />}>
