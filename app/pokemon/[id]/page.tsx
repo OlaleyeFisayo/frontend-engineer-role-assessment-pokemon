@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 import { fetchPokemonDetail } from "@/api/request";
+import { BackButton } from "@/components/back-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { StatBar } from "@/components/stat-bar";
 import { TypeBadge } from "@/components/type-badge";
@@ -20,8 +21,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const raw = await fetchPokemonDetail({ id });
   const imageUrl
     = raw.sprites.other["official-artwork"].front_default
-    ?? raw.sprites.front_default
-    ?? "";
+      ?? raw.sprites.front_default
+      ?? "";
   const types = raw.types.map(t => t.type.name);
 
   return {
@@ -78,14 +79,15 @@ export default async function PokemonDetailPage({ params }: PageProps) {
   const paddedId = String(raw.id).padStart(3, "0");
   const imageSrc
     = raw.sprites.other["official-artwork"].front_default
-    ?? raw.sprites.front_default
-    ?? "/pokemon-fallback.svg";
+      ?? raw.sprites.front_default
+      ?? "/pokemon-fallback.svg";
   const displayName = raw.name.charAt(0).toUpperCase() + raw.name.slice(1);
   const types = raw.types.map(t => t.type.name);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 md:px-8">
       <div className="mx-auto max-w-2xl">
+        <BackButton />
         <Breadcrumb
           items={[
             { label: "POKÉDEX", href: "/pokemon" },
@@ -167,6 +169,7 @@ export default async function PokemonDetailPage({ params }: PageProps) {
             <Suspense
               fallback={(
                 <div className="animate-pulse space-y-2">
+                  {/* eslint-disable react/no-array-index-key */}
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}

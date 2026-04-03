@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 export default function PokemonDetailLoading() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 md:px-8">

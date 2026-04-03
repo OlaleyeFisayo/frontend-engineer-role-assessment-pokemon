@@ -17,6 +17,7 @@ export default function PokemonListingLoading() {
           <div className="rounded-2xl border-2 border-slate-800 bg-slate-900 p-4">
             <div className="mb-3 h-10 rounded-xl bg-slate-800" />
             <div className="flex gap-2">
+              {/* eslint-disable react/no-array-index-key */}
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}

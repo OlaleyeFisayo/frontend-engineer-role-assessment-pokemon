@@ -20,8 +20,8 @@ export function SearchBar() {
   // Sync external URL changes back to input (e.g. browser back/forward).
   // This intentionally sets state in an effect — it's the correct pattern
   // for synchronising controlled input with an external URL state source.
-
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect
     setInputValue(search);
   }, [search]);
 
