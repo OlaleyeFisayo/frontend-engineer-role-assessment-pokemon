@@ -1,5 +1,4 @@
 import antfu from "@antfu/eslint-config";
-import tanstackPluginQuery from "@tanstack/eslint-plugin-query";
 
 export default antfu(
   {
@@ -22,11 +21,7 @@ export default antfu(
   },
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
-    plugins: {
-      "@tanstack/query": tanstackPluginQuery,
-    },
     rules: {
-      ...tanstackPluginQuery.configs.recommended.rules,
       "ts/no-redeclare": "off",
       "ts/consistent-type-definitions": ["error", "type"],
       "no-console": ["warn"],
