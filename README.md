@@ -45,7 +45,7 @@ PokéAPI has no server-side search endpoint. Instead, all 1,350 Pokémon names (
 When `?type=` is set, the listing page calls `GET /type/{name}` which returns all Pokémon of that type. This avoids loading all 1,350 Pokémon into the browser just to filter them.
 
 ### Fetch-only API layer (`api/request.ts`)
-All `fetch` calls are isolated in a single file. `api/index.ts` wraps them in `queryOptions()` for TanStack Query. This separation means fetch logic is testable without React hooks, and query options are reusable across server and client components.
+All `fetch` calls are isolated in a single file. This separation means fetch logic is testable without React hooks, and functions are importable directly by both Server Components and client-side code without needing React hook wrappers.
 
 `fetchPokemonDetail` returns `Promise<RawPokemon>` — the raw PokéAPI shape — so consumers access nested fields directly (`raw.sprites.other["official-artwork"].front_default`). No intermediate mapping is done; the type system documents what fields exist.
 
@@ -118,7 +118,6 @@ app/
 
 api/
   request.ts                # Only file that calls fetch
-  index.ts                  # queryOptions + POKEMON_QUERY_KEY
   types.ts                  # Raw PokéAPI shapes + payload types
 
 components/
