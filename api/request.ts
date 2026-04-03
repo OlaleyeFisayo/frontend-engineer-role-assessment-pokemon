@@ -1,12 +1,12 @@
-import type { NamedAPIResource, PaginatedResponse } from "@/types/api";
-import type { PokemonListItem, PokemonListResponse } from "@/types/pokemon";
-
 import type {
   PokemonDetailPayload,
   PokemonListPayload,
   RawPokemon,
   RawTypeDetail,
 } from "./types";
+import type { NamedAPIResource, PaginatedResponse } from "@/types/api";
+
+import type { PokemonListItem, PokemonListResponse } from "@/types/pokemon";
 
 const POKEAPI_BASE = "https://pokeapi.co/api/v2";
 

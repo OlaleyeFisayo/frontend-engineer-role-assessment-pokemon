@@ -2,9 +2,15 @@
 
 /* Pokédex scan-line effect for screen areas */
 @keyframes flicker {
-  0% { opacity: 0.03; }
-  50% { opacity: 0.06; }
-  100% { opacity: 0.03; }
+  0% {
+    opacity: 0.03;
+  }
+  50% {
+    opacity: 0.06;
+  }
+  100% {
+    opacity: 0.03;
+  }
 }
 
 .scanlines {

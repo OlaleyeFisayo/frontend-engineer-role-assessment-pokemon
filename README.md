@@ -22,59 +22,66 @@ npm run build      # Production build (157 pages)
 
 ## Features
 
-| Feature | Implementation |
-|---|---|
-| Browse all 1,350 Pokémon | Paginated grid (24/page), SSR via `fetchPokemonList` |
-| Search by name | 300ms debounced client-side filter over all names |
-| Filter by type | URL param `?type=` — server re-fetches type endpoint |
-| Detail page | Official artwork, stats, abilities, height, weight |
-| Loading states | Skeleton loaders with Pokédex aesthetic + `animate-pulse` |
-| Error states | Friendly error boundary with reset button |
+| Feature                  | Implementation                                            |
+| ------------------------ | --------------------------------------------------------- |
+| Browse all 1,350 Pokémon | Paginated grid (24/page), SSR via `fetchPokemonList`      |
+| Search by name           | 300ms debounced client-side filter over all names         |
+| Filter by type           | URL param `?type=` — server re-fetches type endpoint      |
+| Detail page              | Official artwork, stats, abilities, height, weight        |
+| Loading states           | Skeleton loaders with Pokédex aesthetic + `animate-pulse` |
+| Error states             | Friendly error boundary with reset button                 |
 
 ---
 
 ## Architecture Decisions
 
 ### URL-driven state (no client state store)
+
 Filter, search, and page are all URL query params (`?q=`, `?type=`, `?page=`). This gives free SSR compatibility, shareable URLs (requirement F-3), browser history navigation, and zero hydration mismatch. A `FilterContext` wraps the listing page to share parsed values across `SearchBar`, `TypeFilter`, and `PokemonGrid` without prop drilling.
 
 ### Client-side search over all names
+
 PokéAPI has no server-side search endpoint. Instead, all 1,350 Pokémon names (~60 KB) are fetched once into TanStack Query cache with `staleTime: Infinity` and filtered client-side with a 300ms debounce. This is faster than hitting the API on every keystroke and avoids pagination complexity for search results.
 
 ### Type filter via server-side fetch
+
 When `?type=` is set, the listing page calls `GET /type/{name}` which returns all Pokémon of that type. This avoids loading all 1,350 Pokémon into the browser just to filter them.
 
 ### Fetch-only API layer (`api/request.ts`)
+
 All `fetch` calls are isolated in a single file. This separation means fetch logic is testable without React hooks, and functions are importable directly by both Server Components and client-side code without needing React hook wrappers.
 
 `fetchPokemonDetail` returns `Promise<RawPokemon>` — the raw PokéAPI shape — so consumers access nested fields directly (`raw.sprites.other["official-artwork"].front_default`). No intermediate mapping is done; the type system documents what fields exist.
 
 ### TanStack Query for client data
+
 - **Default `staleTime: 10 min`** — avoids re-fetching on every navigation
 - **`staleTime: Infinity`** for Pokémon names and types — these never change
 - **`queryOptions()` pattern** — not wrapper hooks, so options can be passed to both `useQuery` and server-side `prefetchQuery` without duplication
 
 ### Justified memoization only
+
 - `useMemo` on FilterContext value object — prevents all consumers re-rendering on every parent render
 - `useCallback` on `setSearch`/`setType`/`setPage` — these are dependencies of the context value `useMemo`, so they must have stable identity
 - No speculative memoization on leaf components (cards, badges, bars) — they receive stable props and have no expensive derived computation
 
 ### `type` over `interface` everywhere
+
 Enforced by ESLint rule `ts/consistent-type-definitions: ["error", "type"]`. Consistent, composable, and avoids declaration merging surprises.
 
 ---
 
 ## Performance Optimizations
 
-| Technique | Where | Effect |
-|---|---|---|
-| `next/image` with explicit dimensions | `PokemonCard`, detail hero | Prevents CLS; browser reserves correct space before image loads |
-| `priority` on first 4 cards | `PokemonCard` (index < 4) | Improves LCP — hero images above the fold are not lazy-loaded |
-| ISR with `revalidate` | Detail pages: 1h, List/API route: 1d | Static pages served from CDN edge, no cold-start latency |
-| `force-cache` for static data | `fetchAllPokemonNames`, `fetchPokemonTypes` | Fetched once at build time, served from cache forever |
-| `next/font` (Inter) | Root layout | Eliminates FOUT (flash of unstyled text), reduces CLS |
-| Suspense streaming | Stats + Abilities sections on detail page | Page shell renders immediately; heavy sections stream in (B-2) |
-| `dynamic(..., { ssr: false })` | `SearchBar`, `TypeFilter` | Client-only components split from server bundle |
+| Technique                             | Where                                       | Effect                                                          |
+| ------------------------------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| `next/image` with explicit dimensions | `PokemonCard`, detail hero                  | Prevents CLS; browser reserves correct space before image loads |
+| `priority` on first 4 cards           | `PokemonCard` (index < 4)                   | Improves LCP — hero images above the fold are not lazy-loaded   |
+| ISR with `revalidate`                 | Detail pages: 1h, List/API route: 1d        | Static pages served from CDN edge, no cold-start latency        |
+| `force-cache` for static data         | `fetchAllPokemonNames`, `fetchPokemonTypes` | Fetched once at build time, served from cache forever           |
+| `next/font` (Inter)                   | Root layout                                 | Eliminates FOUT (flash of unstyled text), reduces CLS           |
+| Suspense streaming                    | Stats + Abilities sections on detail page   | Page shell renders immediately; heavy sections stream in (B-2)  |
+| `dynamic(..., { ssr: false })`        | `SearchBar`, `TypeFilter`                   | Client-only components split from server bundle                 |
 
 ---
 
@@ -96,9 +103,11 @@ npm run test:coverage       # with v8 coverage report
 ## Bonus Tasks
 
 ### B-2: Suspense Streaming
+
 The detail page wraps `<PokemonStats>` and `<PokemonAbilities>` in `<Suspense>` boundaries. The page shell (header, image, info grid) renders immediately while stats and abilities stream in. Skeleton fallbacks match the Pokédex card aesthetic.
 
 ### B-3: Accessibility
+
 - All images have descriptive `alt` text
 - Pagination uses `aria-label` on nav, `aria-current="page"` on active page button
 - Type badges have sufficient color contrast (white text on colored backgrounds)
