@@ -14,7 +14,7 @@ type PageProps = {
 };
 
 export async function generateStaticParams() {
-  return Array.from({ length: 151 }, (_, i) => ({ id: String(i + 1) }));
+  return [];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
