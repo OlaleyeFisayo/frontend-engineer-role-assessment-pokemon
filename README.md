@@ -98,6 +98,8 @@ Tested on the live Cloudflare Workers deployment (`/pokemon`).
 | Best Practices  | 100    | 100     |
 | SEO             | 100    | 100     |
 
+Full reports: [Mobile](public/mobile%20score.pdf) · [Desktop](public/desktop%20score.pdf)
+
 ---
 
 ## Testing
