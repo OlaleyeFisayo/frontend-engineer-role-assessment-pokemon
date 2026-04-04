@@ -16,6 +16,15 @@ const STAT_ABBREVIATIONS: Record<string, string> = {
   "speed": "SPD",
 };
 
+const STAT_FULL_NAMES: Record<string, string> = {
+  "hp": "Hit Points",
+  "attack": "Attack",
+  "defense": "Defense",
+  "special-attack": "Special Attack",
+  "special-defense": "Special Defense",
+  "speed": "Speed",
+};
+
 export function StatBar({
   name,
   value,
@@ -24,10 +33,14 @@ export function StatBar({
 }: StatBarProps) {
   const percentage = Math.min((value / maxValue) * 100, 100);
   const label = STAT_ABBREVIATIONS[name] ?? name.toUpperCase().slice(0, 3);
+  const fullName = STAT_FULL_NAMES[name] ?? name;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <span className="w-8 shrink-0 font-mono text-xs text-green-300">
+      <span
+        className="w-8 shrink-0 cursor-help font-mono text-xs text-green-300"
+        title={fullName}
+      >
         {label}
       </span>
       <div className="h-2 flex-1 rounded-full bg-slate-700">

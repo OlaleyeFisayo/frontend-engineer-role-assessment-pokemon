@@ -147,21 +147,19 @@ export default async function PokemonDetailPage({ params }: PageProps) {
           </div>
 
           {/* Abilities — streamed via Suspense */}
-          <div className="rounded-2xl bg-slate-900 p-4">
-            <h2 className="mb-3 font-mono text-xs font-bold uppercase tracking-wider text-green-300/50">
-              ABILITIES
-            </h2>
-            <Suspense
-              fallback={(
+          <Suspense
+            fallback={(
+              <div className="rounded-2xl bg-slate-900 p-4">
+                <div className="mb-3 h-3 w-16 rounded bg-slate-800" />
                 <div className="flex animate-pulse gap-2">
                   <div className="h-7 w-20 rounded-full bg-slate-800" />
                   <div className="h-7 w-24 rounded-full bg-slate-800" />
                 </div>
-              )}
-            >
-              <PokemonAbilities id={id} />
-            </Suspense>
-          </div>
+              </div>
+            )}
+          >
+            <PokemonAbilities id={id} />
+          </Suspense>
         </div>
       </div>
     </main>
