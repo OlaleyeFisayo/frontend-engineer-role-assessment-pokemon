@@ -46,6 +46,12 @@ export default async function PokemonDetailPage({ params }: PageProps) {
       ?? "/pokemon-fallback.svg";
   const displayName = raw.name.charAt(0).toUpperCase() + raw.name.slice(1);
   const types = raw.types.map(t => t.type.name);
+  const infoItems = [
+    raw.height != null && { label: "HEIGHT", value: `${raw.height / 10}m` },
+    raw.weight != null && { label: "WEIGHT", value: `${raw.weight / 10}kg` },
+    raw.base_experience != null && { label: "BASE EXP", value: raw.base_experience },
+    types.length > 0 && { label: "TYPES", value: types.length },
+  ].filter(Boolean) as { label: string; value: string | number }[];
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 md:px-8">
@@ -108,21 +114,18 @@ export default async function PokemonDetailPage({ params }: PageProps) {
           </div>
 
           {/* Info grid */}
-          <div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl bg-slate-900 p-4 sm:grid-cols-4">
-            {[
-              { label: "HEIGHT", value: `${raw.height / 10}m` },
-              { label: "WEIGHT", value: `${raw.weight / 10}kg` },
-              { label: "BASE EXP", value: raw.base_experience },
-              { label: "TYPES", value: types.length },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="font-mono text-xs text-green-300/50">{label}</p>
-                <p className="font-mono text-sm font-bold text-green-300">
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
+          {infoItems.length > 0 && (
+            <div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl bg-slate-900 p-4 sm:grid-cols-4">
+              {infoItems.map(({ label, value }) => (
+                <div key={label}>
+                  <p className="font-mono text-xs text-green-300/50">{label}</p>
+                  <p className="font-mono text-sm font-bold text-green-300">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Stats — streamed via Suspense */}
           <div className="mb-4 rounded-2xl bg-slate-900 p-4">
