@@ -2,7 +2,7 @@
 
 A Pokédex web app built for the Checkit Frontend Engineer take-home assessment. Browse, search, and filter all Pokémon with a classic Pokédex hardware aesthetic.
 
-**Live:** _[Cloudflare Workers URL — added after deployment]_
+**Live:** https://pokedex.festusolaleyef.workers.dev/pokemon
 
 **Stack:** Next.js 16 (App Router) · TypeScript strict · Tailwind CSS v4 · React Context · Cloudflare Workers via OpenNext
 
@@ -89,7 +89,14 @@ Enforced by ESLint (`ts/consistent-type-definitions: ["error", "type"]`). Consis
 
 ### Lighthouse scores
 
-_[To be added after Cloudflare deployment]_
+Tested on the live Cloudflare Workers deployment (`/pokemon`).
+
+| Category        | Mobile | Desktop |
+| --------------- | ------ | ------- |
+| Performance     | 99     | 98      |
+| Accessibility   | 96     | 96      |
+| Best Practices  | 100    | 100     |
+| SEO             | 100    | 100     |
 
 ---
 
