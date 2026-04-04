@@ -8,7 +8,7 @@ import { useFilter } from "@/hooks/use-filter";
 export function SearchBar() {
   const { search, setSearch } = useFilter();
   const [inputValue, setInputValue] = useState(search);
-  const debouncedValue = useDebounce(inputValue, 300);
+  const debouncedValue = useDebounce(inputValue);
 
   // Sync debounced value to URL
   useEffect(() => {
