@@ -27,7 +27,7 @@ npm run build      # Production build
 | Feature            | Implementation                                                         |
 | ------------------ | ---------------------------------------------------------------------- |
 | Browse all Pokémon | Paginated grid (24/page), server-rendered with ISR                     |
-| Search by name     | 300ms debounced input, server-side match across all entries            |
+| Search by name     | 1000ms debounced input, server-side match across all entries            |
 | Filter by type     | `?type=` URL param, server re-fetches PokéAPI type endpoint            |
 | Detail page        | Official artwork, base stats, abilities, height, weight                |
 | Shareable URLs     | All filters and pagination live in the URL (`?q=`, `?type=`, `?page=`) |
